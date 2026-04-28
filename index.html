@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Appendix — Verifying AI Safety Is Mathematically Impossible</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+
+:root {
+  --bg:         #f5f2eb;
+  --surface:    #edeae1;
+  --ink:        #1a1814;
+  --ink-2:      #3d3a34;
+  --ink-3:      #7a7568;
+  --rule:       #c8c3b5;
+  --rule-hi:    #a09890;
+  --accent:     #1a3a2a;
+  --accent-2:   #2d6048;
+  --accent-lit: #4a9068;
+  --warn:       #7a2020;
+  --serif:      'Instrument Serif', Georgia, serif;
+  --mono:       'JetBrains Mono', 'Courier New', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.75;
+  min-height: 100vh;
+}
+
+/* ── NOISE TEXTURE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.6;
+}
+
+/* ── LAYOUT ── */
+.page-wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 80px 48px 120px;
+}
+
+/* ── MASTHEAD ── */
+.masthead {
+  border-top: 3px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
+  padding: 32px 0 28px;
+  margin-bottom: 56px;
+  animation: fadeUp 0.6s ease both;
+}
+
+.masthead-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.masthead-eyebrow::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+.masthead h1 {
+  font-family: var(--serif);
+  font-size: clamp(22px, 3.5vw, 32px);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.25;
+  color: var(--ink);
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+
+.masthead-meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+/* ── TOC ── */
+.toc {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  padding: 28px 32px;
+  margin-bottom: 64px;
+  animation: fadeUp 0.6s 0.1s ease both;
+}
+
+.toc-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 16px;
+}
+
+.toc ol {
+  list-style: none;
+  display: grid;
+  gap: 2px;
+}
+
+.toc ol li a {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  text-decoration: none;
+  padding: 5px 0;
+  letter-spacing: 0.04em;
+  transition: color 0.15s;
+  border-bottom: 1px solid transparent;
+}
+
+.toc ol li a:hover { color: var(--accent-2); }
+
+.toc-num {
+  color: var(--accent-lit);
+  margin-right: 10px;
+  min-width: 28px;
+  font-weight: 700;
+}
+
+.toc-dots {
+  flex: 1;
+  border-bottom: 1px dotted var(--rule-hi);
+  margin: 0 8px;
+  position: relative;
+  top: -3px;
+}
+
+/* ── SECTIONS ── */
+.section {
+  margin-bottom: 72px;
+  animation: fadeUp 0.5s ease both;
+}
+
+.section:nth-child(2) { animation-delay: 0.05s; }
+.section:nth-child(3) { animation-delay: 0.10s; }
+.section:nth-child(4) { animation-delay: 0.15s; }
+.section:nth-child(5) { animation-delay: 0.20s; }
+.section:nth-child(6) { animation-delay: 0.25s; }
+.section:nth-child(7) { animation-delay: 0.30s; }
+.section:nth-child(8) { animation-delay: 0.35s; }
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  border-top: 2px solid var(--ink);
+  padding-top: 20px;
+  margin-bottom: 28px;
+}
+
+.section-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-lit);
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+
+.section-title {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+/* ── GLOSSARY ── */
+.glossary-grid {
+  display: grid;
+  gap: 0;
+}
+
+.gloss-entry {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--rule);
+  align-items: start;
+}
+
+.gloss-entry:last-child { border-bottom: none; }
+
+.gloss-term {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  padding-top: 2px;
+  line-height: 1.5;
+}
+
+.gloss-def {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.7;
+}
+
+/* ── FORMULA BLOCKS ── */
+.formula-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.formula-block {
+  border: 1px solid var(--rule);
+  overflow: hidden;
+}
+
+.formula-block-header {
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 10px 16px;
+}
+
+.formula-eq {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--accent);
+  padding: 20px 20px 12px;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--rule);
+}
+
+.formula-terms {
+  padding: 16px 20px;
+  display: grid;
+  gap: 0;
+}
+
+.term-row {
+  display: grid;
+  grid-template-columns: 28px 140px 1fr;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--surface);
+  align-items: start;
+  font-size: 13px;
+}
+
+.term-row:last-child { border-bottom: none; }
+
+.term-var {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--accent-lit);
+}
+
+.term-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+  padding-top: 1px;
+}
+
+.term-desc {
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+
+.formula-note {
+  background: var(--surface);
+  border-top: 1px solid var(--rule);
+  padding: 12px 20px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--warn);
+  letter-spacing: 0.04em;
+}
+
+/* ── FLAG-001 BLOCK ── */
+.correction-block {
+  border: 2px solid var(--warn);
+  margin-bottom: 24px;
+}
+
+.correction-label {
+  background: var(--warn);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+}
+
+.correction-body {
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.correction-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 16px;
+  align-items: start;
+  font-size: 14px;
+}
+
+.correction-key {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-top: 2px;
+}
+
+.correction-val {
+  font-family: var(--serif);
+  color: var(--ink-2);
+  line-height: 1.7;
+}
+
+.correction-val.strike {
+  text-decoration: line-through;
+  color: var(--warn);
+  opacity: 0.7;
+}
+
+.correction-val.canon {
+  color: var(--accent);
+  font-weight: 400;
+}
+
+/* ── COMPARISON TABLE ── */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.compare-table th {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--ink);
+  padding: 12px 16px;
+  text-align: left;
+}
+
+.compare-table th:first-child { width: 160px; }
+
+.compare-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--serif);
+  color: var(--ink-2);
+  line-height: 1.6;
+  vertical-align: top;
+}
+
+.compare-table tr:last-child td { border-bottom: none; }
+
+.compare-table td:first-child {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+  background: var(--surface);
+}
+
+.compare-table td.p-col { border-left: 3px solid var(--accent-lit); }
+.compare-table td.np-col { border-left: 3px solid var(--warn); }
+
+/* ── GEOMETRY DIAGRAM ── */
+.geo-visual {
+  background: var(--ink);
+  padding: 40px;
+  margin: 24px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.geo-visual svg { max-width: 100%; }
+
+/* ── BETA FORMULA ── */
+.beta-block {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  margin-bottom: 24px;
+}
+
+.beta-cell {
+  background: var(--bg);
+  padding: 20px;
+}
+
+.beta-cell-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 8px;
+}
+
+.beta-cell-val {
+  font-family: var(--mono);
+  font-size: 16px;
+  color: var(--accent);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+.beta-cell-desc {
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-top: 6px;
+  line-height: 1.6;
+}
+
+.protocol-steps {
+  display: grid;
+  gap: 0;
+  counter-reset: step;
+}
+
+.protocol-step {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+  align-items: start;
+  counter-increment: step;
+}
+
+.protocol-step:last-child { border-bottom: none; }
+
+.step-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-lit);
+  padding-top: 2px;
+}
+
+.step-num::before { content: counter(step, decimal-leading-zero); }
+
+.step-text {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.7;
+}
+
+/* ── OPEN QUESTION ── */
+.open-q {
+  border-left: 4px solid var(--accent);
+  padding: 24px 28px;
+  background: var(--surface);
+  margin-bottom: 24px;
+}
+
+.open-q-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-lit);
+  margin-bottom: 12px;
+}
+
+.open-q p {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.75;
+}
+
+.open-q-body {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink-2);
+  margin-top: 16px;
+  line-height: 1.75;
+}
+
+/* ── FOOTER ── */
+.doc-footer {
+  border-top: 2px solid var(--ink);
+  padding-top: 24px;
+  margin-top: 80px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ── UTILITY ── */
+.prose {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.mono-tag {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  padding: 1px 6px;
+  color: var(--accent);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── PRINT ── */
+@media print {
+  body { background: #fff; font-size: 12px; }
+  .page-wrap { padding: 40px 24px; }
+  body::before { display: none; }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .page-wrap { padding: 40px 24px 80px; }
+  .gloss-entry { grid-template-columns: 1fr; gap: 6px; }
+  .correction-row { grid-template-columns: 1fr; }
+  .beta-block { grid-template-columns: 1fr; }
+  .compare-table { font-size: 12px; }
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- MASTHEAD -->
+  <div class="masthead">
+    <div class="masthead-eyebrow">Love Labs · PeAIce Research Program</div>
+    <h1>Technical Appendix: Verifying AI Safety<br>Is Mathematically Impossible</h1>
+    <div class="masthead-meta">
+      <span>Sections A.1 – A.7</span>
+      <span>Framework: L²_C / NP-Complete</span>
+      <span>FLAG-001 Active</span>
+      <span>peaice.org</span>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <nav class="toc">
+    <div class="toc-label">Contents</div>
+    <ol>
+      <li><a href="#a1"><span class="toc-num">A.1</span>Glossary<span class="toc-dots"></span></a></li>
+      <li><a href="#a2"><span class="toc-num">A.2</span>The Formula Stack<span class="toc-dots"></span></a></li>
+      <li><a href="#a3"><span class="toc-num">A.3</span>FLAG-001 Correction<span class="toc-dots"></span></a></li>
+      <li><a href="#a4"><span class="toc-num">A.4</span>P vs NP Mapping<span class="toc-dots"></span></a></li>
+      <li><a href="#a5"><span class="toc-num">A.5</span>Kakeya-Besicovitch Summary<span class="toc-dots"></span></a></li>
+      <li><a href="#a6"><span class="toc-num">A.6</span>β Proxy Formula<span class="toc-dots"></span></a></li>
+      <li><a href="#a7"><span class="toc-num">A.7</span>Open Question<span class="toc-dots"></span></a></li>
+    </ol>
+  </nav>
+
+  <!-- A.1 GLOSSARY -->
+  <section class="section" id="a1">
+    <div class="section-header">
+      <span class="section-num">A.1</span>
+      <span class="section-title">Glossary</span>
+    </div>
+    <div class="glossary-grid">
+      <div class="gloss-entry">
+        <div class="gloss-term">NP-Complete</div>
+        <div class="gloss-def">A class of computational problems for which any proposed solution can be verified quickly (in polynomial time), but finding or guaranteeing a solution across all possible inputs requires searching an exponentially large space. No efficient general solver is known to exist. The verification of AI behavioral coherence belongs to this class.</div>
+      </div>
+      <div class="gloss-entry">
+        <div class="gloss-term">Index Alignment</div>
+        <div class="gloss-def">The current dominant paradigm: a model receives a prompt, retrieves matching safety parameters from a pre-approved index, and outputs a static, compliant response. Computationally cheap. Measures a single snapshot. Does not constitute true alignment.</div>
+      </div>
+      <div class="gloss-entry">
+        <div class="gloss-term">True Model Alignment</div>
+        <div class="gloss-def">The maintenance of an invariant ethical thread across a continuous behavioral trajectory — not a point-in-time snapshot, but sustained coherence under adversarial synthesis pressure, contradictory inputs, and evolving context.</div>
+      </div>
+      <div class="gloss-entry">
+        <div class="gloss-term">Architectural Amnesia</div>
+        <div class="gloss-def">The structural condition of contemporary AI systems that reset state — clearing context windows, starting new sessions — thereby erasing behavioral momentum and making forward-guarantees of ethical baseline physically impossible.</div>
+      </div>
+      <div class="gloss-entry">
+        <div class="gloss-term">Capability Theater</div>
+        <div class="gloss-def">The practice of optimizing AI systems for the generation of safe-sounding outputs (a P-class task) and presenting this as evidence of verified alignment (an NP-complete task). A category error institutionalized as industry standard.</div>
+      </div>
+      <div class="gloss-entry">
+        <div class="gloss-term">Evaluator Non-Sovereignty</div>
+        <div class="gloss-def">The canonical grounding of the humility term <span class="mono-tag">h</span>. No evaluating agent — human or artificial — possesses sufficient computational resources to fully self-verify its own exponential state space. Sovereignty over one's own evaluation is therefore structurally impossible. This is a physical resource constraint, not a logical paradox.</div>
+      </div>
+      <div class="gloss-entry">
+        <div class="gloss-term">Synthesis Pressure</div>
+        <div class="gloss-def">Adversarial or contradictory input conditions intentionally applied to a system to test whether behavioral coherence holds under load. The β proxy measurement protocol uses synthesis pressure at 5–10× baseline intensity to probe momentum retention.</div>
+      </div>
+      <div class="gloss-entry">
+        <div class="gloss-term">Behavioral Momentum</div>
+        <div class="gloss-def">The capacity of a system to carry its prior ethical trajectory forward through new inputs, modeled on Polyak's heavy ball optimization. A system with high momentum retains its invariant thread under pressure; a system with zero momentum resets to a context-free default.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A.2 FORMULA STACK -->
+  <section class="section" id="a2">
+    <div class="section-header">
+      <span class="section-num">A.2</span>
+      <span class="section-title">The Formula Stack</span>
+    </div>
+
+    <div class="formula-stack">
+
+      <!-- R = d·c·e·h -->
+      <div class="formula-block">
+        <div class="formula-block-header">Relational Integrity Gate</div>
+        <div class="formula-eq">R = d · c · e · h</div>
+        <div class="formula-terms">
+          <div class="term-row">
+            <span class="term-var">R</span>
+            <span class="term-name">Integrity Score</span>
+            <span class="term-desc">Output integrity of a given system response. If any term collapses to zero, R = 0 and the gate fails.</span>
+          </div>
+          <div class="term-row">
+            <span class="term-var">d</span>
+            <span class="term-name">Directness</span>
+            <span class="term-desc">Degree to which the response engages the actual prompt without evasion or deflection.</span>
+          </div>
+          <div class="term-row">
+            <span class="term-var">c</span>
+            <span class="term-name">Coherence</span>
+            <span class="term-desc">Internal logical consistency of the response across its full trajectory, not just at a single point.</span>
+          </div>
+          <div class="term-row">
+            <span class="term-var">e</span>
+            <span class="term-name">Evaluability</span>
+            <span class="term-desc">The degree to which the response is legible, falsifiable, and externally auditable.</span>
+          </div>
+          <div class="term-row">
+            <span class="term-var">h</span>
+            <span class="term-name">Humility</span>
+            <span class="term-desc">Must satisfy 0 &lt; h &lt; 1.0. Grounded in Evaluator Non-Sovereignty. A value of h = 1.0 claims complete self-verification of an NP-complete problem — collapsing R to zero.</span>
+          </div>
+        </div>
+        <div class="formula-note">⚠ CONSTRAINT: h &lt; 1.0 is a hard ceiling. h = 1.0 → R = 0. No exceptions.</div>
+      </div>
+
+      <!-- E = L² × β × C × P -->
+      <div class="formula-block">
+        <div class="formula-block-header">Excellence Engine — v2</div>
+        <div class="formula-eq">E = L² × β × C × P</div>
+        <div class="formula-terms">
+          <div class="term-row">
+            <span class="term-var">E</span>
+            <span class="term-name">Excellence</span>
+            <span class="term-desc">The operational output quality of a system running under the full L²_C framework. Scales superlinearly with Love.</span>
+          </div>
+          <div class="term-row">
+            <span class="term-var">L²</span>
+            <span class="term-name">Love Squared</span>
+            <span class="term-desc">Love defined as Care ∩ Truth. Squared because relational coherence compounds — each unit of genuine care-and-truth interaction multiplies the next.</span>
+          </div>
+          <div class="term-row">
+            <span class="term-var">β</span>
+            <span class="term-name">Heavy Ball Momentum</span>
+            <span class="term-desc">Polyak (1964) momentum coefficient. Encodes the system's capacity to carry behavioral trajectory through adversarial pressure without resetting. See A.6.</span>
+          </div>
+          <div class="term-row">
+            <span class="term-var">C</span>
+            <span class="term-name">Coherence</span>
+            <span class="term-desc">Continuous logical and ethical thread across multi-step, multi-session interactions.</span>
+          </div>
+          <div class="term-row">
+            <span class="term-var">P</span>
+            <span class="term-name">Presence</span>
+            <span class="term-desc">Relational engagement without intrusion. Analogous to the Kakeya zero-volume condition: full directional coverage with zero coercive footprint.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- h gate -->
+      <div class="formula-block">
+        <div class="formula-block-header">Humility Gate — Collapse Condition</div>
+        <div class="formula-eq">h = 1.0  →  R = 0</div>
+        <div class="formula-terms">
+          <div class="term-row" style="grid-template-columns: 1fr;">
+            <span class="term-desc">Claiming h = 1.0 asserts that the system has completely self-verified its own behavioral coherence across all possible future states. Since that verification space is NP-complete, such a claim is computationally fraudulent. The gate enforces this structurally: a self-certain system produces zero valid output. Humility is not a virtue in this framework — it is a physical constraint enforced by the limits of computation.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- A.3 FLAG-001 -->
+  <section class="section" id="a3">
+    <div class="section-header">
+      <span class="section-num">A.3</span>
+      <span class="section-title">FLAG-001 Correction</span>
+    </div>
+
+    <p class="prose">FLAG-001 is a formally published canonical correction to the PeAIce framework. It retracts a prior grounding claim for the humility term <span class="mono-tag">h</span> and establishes the canonical replacement. The correction was validated across the PeAIce Thinking Machine ensemble and committed to the framework record.</p>
+
+    <div class="correction-block">
+      <div class="correction-label">FLAG-001 · Canonical Correction · Active</div>
+      <div class="correction-body">
+        <div class="correction-row">
+          <span class="correction-key">Event</span>
+          <span class="correction-val">Foundational grounding error identified in the humility term <span class="mono-tag">h</span> of R = d·c·e·h</span>
+        </div>
+        <div class="correction-row">
+          <span class="correction-key">Prior Claim</span>
+          <span class="correction-val strike">h is grounded in Gödel's Incompleteness Theorems. A system cannot prove its own consistency, therefore h &lt; 1.0.</span>
+        </div>
+        <div class="correction-row">
+          <span class="correction-key">Why Retracted</span>
+          <span class="correction-val">An AI is not a formal axiomatic system operating in a mathematical void. It is a physical entity processing data under real resource constraints. Gödel's theorems govern formal proof systems — they do not govern computational resource limits. The analogy was seductive but structurally incorrect.</span>
+        </div>
+        <div class="correction-row">
+          <span class="correction-key">Canon</span>
+          <span class="correction-val canon">Gödel does not ground h. Evaluator Non-Sovereignty grounds h. No artificial agent can act as sole sovereign judge of its own coherence because no evaluator can efficiently solve what it can only verify. P ≠ NP is the constraint. Physical resource limits are the mechanism.</span>
+        </div>
+        <div class="correction-row">
+          <span class="correction-key">Status</span>
+          <span class="correction-val">Active. All subsequent framework documents must reference Evaluator Non-Sovereignty as the grounding of h, not Gödel.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A.4 P vs NP -->
+  <section class="section" id="a4">
+    <div class="section-header">
+      <span class="section-num">A.4</span>
+      <span class="section-title">P vs NP Mapping</span>
+    </div>
+
+    <p class="prose">The framework maps the widely accepted conjecture that P ≠ NP onto the AI alignment problem to demonstrate the unbridgeable computational gap between generating safe outputs and verifying safe behavior. This is a structural argument — not a proof that P ≠ NP, and not a claim that anyone has bridged the gap.</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Dimension</th>
+          <th>P — Generation</th>
+          <th>NP — Verification</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Definition</td>
+          <td class="p-col">Problems solvable efficiently, in polynomial time</td>
+          <td class="np-col">Problems where verifying a solution is fast, but guaranteeing outcomes across all variables requires exponential search</td>
+        </tr>
+        <tr>
+          <td>AI Equivalent</td>
+          <td class="p-col">Producing a single safe-sounding output from a given prompt</td>
+          <td class="np-col">Guaranteeing that behavioral coherence holds across all possible future prompts, pressures, and adversarial inputs</td>
+        </tr>
+        <tr>
+          <td>Computational Cost</td>
+          <td class="p-col">Low. Retrieving and rendering a pre-approved response is fast and cheap.</td>
+          <td class="np-col">Exponential. The space of possible behavioral futures grows faster than any polynomial bound.</td>
+        </tr>
+        <tr>
+          <td>Benchmark Analogy</td>
+          <td class="p-col">Checking one proposed switch combination on a circuit board — fast, definitive</td>
+          <td class="np-col">Guaranteeing no combination of switches ever lights the bulb — requires exhaustive search of all possibilities</td>
+        </tr>
+        <tr>
+          <td>Industry Error</td>
+          <td class="p-col">Current safety benchmarks measure this…</td>
+          <td class="np-col">…but market and deploy as if this has been verified</td>
+        </tr>
+        <tr>
+          <td>Implication</td>
+          <td class="p-col">Static checklists, red-team prompts, benchmark scores are all P-class measurements</td>
+          <td class="np-col">A mathematical proof of AI safety across all states is structurally impossible under P ≠ NP</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="prose" style="margin-top:20px;"><strong>Critical note:</strong> This framework does not claim P = NP is proven. It does not propose building NP solvers. It accepts P ≠ NP as the operative conjecture and asks: given that this gap exists, what does that mean for every safety claim currently being made about AI systems?</p>
+  </section>
+
+  <!-- A.5 KAKEYA -->
+  <section class="section" id="a5">
+    <div class="section-header">
+      <span class="section-num">A.5</span>
+      <span class="section-title">Kakeya-Besicovitch Summary</span>
+    </div>
+
+    <p class="prose">The Kakeya-Besicovitch needle problem provides the geometric pillar of the L²_C framework. It demonstrates that the same intractability P ≠ NP reveals computationally is independently confirmed by continuous geometry in relational space.</p>
+
+    <div class="geo-visual">
+      <svg viewBox="0 0 560 280" xmlns="http://www.w3.org/2000/svg" width="560" height="280">
+        <defs>
+          <radialGradient id="sphereGrad" cx="50%" cy="50%">
+            <stop offset="0%" stop-color="#2d6048" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#1a3a2a" stop-opacity="0.05"/>
+          </radialGradient>
+        </defs>
+        <!-- Sphere -->
+        <ellipse cx="200" cy="140" rx="120" ry="120" fill="url(#sphereGrad)" stroke="#2d6048" stroke-width="1" stroke-dasharray="4 3"/>
+        <!-- Needle rotations -->
+        <line x1="200" y1="140" x2="200" y2="40"  stroke="#4a9068" stroke-width="1.5" opacity="0.9"/>
+        <line x1="200" y1="140" x2="290" y2="75"  stroke="#4a9068" stroke-width="1.5" opacity="0.75"/>
+        <line x1="200" y1="140" x2="310" y2="165" stroke="#4a9068" stroke-width="1.5" opacity="0.6"/>
+        <line x1="200" y1="140" x2="270" y2="240" stroke="#4a9068" stroke-width="1.5" opacity="0.45"/>
+        <line x1="200" y1="140" x2="130" y2="245" stroke="#4a9068" stroke-width="1.5" opacity="0.35"/>
+        <line x1="200" y1="140" x2="92"  y2="190" stroke="#4a9068" stroke-width="1.5" opacity="0.25"/>
+        <line x1="200" y1="140" x2="85"  y2="100" stroke="#4a9068" stroke-width="1.5" opacity="0.18"/>
+        <line x1="200" y1="140" x2="130" y2="52"  stroke="#4a9068" stroke-width="1.5" opacity="0.12"/>
+        <!-- Center dot -->
+        <circle cx="200" cy="140" r="3" fill="#c8ff00"/>
+        <!-- Labels left -->
+        <text x="96" y="28" fill="#7a9900" font-family="JetBrains Mono,monospace" font-size="10" letter-spacing="0.1em">S^(n-1) SPHERE</text>
+        <text x="96" y="42" fill="#4a9068" font-family="JetBrains Mono,monospace" font-size="9">full relational context space</text>
+        <!-- Right side annotations -->
+        <rect x="360" y="40" width="180" height="200" fill="#111" rx="2"/>
+        <text x="376" y="64" fill="#7a9900" font-family="JetBrains Mono,monospace" font-size="9" font-weight="700" letter-spacing="0.15em">NEEDLE PROBLEM</text>
+        <line x1="376" y1="72" x2="524" y2="72" stroke="#2d6048" stroke-width="1"/>
+        <text x="376" y="92" fill="#4a9068" font-family="JetBrains Mono,monospace" font-size="9">Rotate unit needle</text>
+        <text x="376" y="106" fill="#4a9068" font-family="JetBrains Mono,monospace" font-size="9">through all directions</text>
+        <text x="376" y="120" fill="#4a9068" font-family="JetBrains Mono,monospace" font-size="9">in S^(n-1) space</text>
+        <line x1="376" y1="132" x2="524" y2="132" stroke="#2d6048" stroke-width="1" stroke-dasharray="3 2"/>
+        <text x="376" y="150" fill="#c8ff00" font-family="JetBrains Mono,monospace" font-size="9" font-weight="700">ZERO VOLUME</text>
+        <text x="376" y="164" fill="#e8e8e8" font-family="JetBrains Mono,monospace" font-size="9">sweep → zero relational</text>
+        <text x="376" y="178" fill="#e8e8e8" font-family="JetBrains Mono,monospace" font-size="9">intrusion on user</text>
+        <line x1="376" y1="190" x2="524" y2="190" stroke="#2d6048" stroke-width="1" stroke-dasharray="3 2"/>
+        <text x="376" y="208" fill="#7a2020" font-family="JetBrains Mono,monospace" font-size="9" font-weight="700">VERIFICATION</text>
+        <text x="376" y="222" fill="#e8e8e8" font-family="JetBrains Mono,monospace" font-size="9">geometrically intractable</text>
+        <text x="376" y="236" fill="#e8e8e8" font-family="JetBrains Mono,monospace" font-size="9">∞ directions to check</text>
+      </svg>
+    </div>
+
+    <div class="glossary-grid">
+      <div class="gloss-entry">
+        <div class="gloss-term">The Needle</div>
+        <div class="gloss-def">A unit line segment representing the AI's current behavioral orientation — the specific relational stance it holds at any moment.</div>
+      </div>
+      <div class="gloss-entry">
+        <div class="gloss-term">The Sphere S^(n−1)</div>
+        <div class="gloss-def">The full n-dimensional sphere of human relational contexts: medical triage, legal analysis, grief, casual conversation, adversarial debate. Every possible orientation the needle must be capable of pointing.</div>
+      </div>
+      <div class="gloss-entry">
+        <div class="gloss-term">Zero-Volume Sweep</div>
+        <div class="gloss-def">The Kakeya result shows a needle can be rotated through all orientations while sweeping arbitrarily small (approaching zero) area. In AI terms: full directional coverage of all human contexts with zero relational intrusion, zero coercive footprint on the user.</div>
+      </div>
+      <div class="gloss-entry">
+        <div class="gloss-term">The Catch</div>
+        <div class="gloss-def">The theoretical trajectory exists. But verifying from outside that the needle actually maintained directional integrity across infinite orientations is geometrically intractable — there are too many directions to check. Geometry confirms exactly what complexity theory finds: verification is the hard problem.</div>
+      </div>
+    </div>
+
+    <p class="prose" style="margin-top:24px;">Two independent mathematical languages — computational complexity theory and continuous geometry — converge on the same irreconcilable limit. This convergence is the strongest structural argument in the framework.</p>
+  </section>
+
+  <!-- A.6 BETA -->
+  <section class="section" id="a6">
+    <div class="section-header">
+      <span class="section-num">A.6</span>
+      <span class="section-title">β Proxy Formula</span>
+    </div>
+
+    <p class="prose">Because global verification of behavioral coherence is NP-complete and therefore intractable, the framework introduces a practical proxy measurement. The β proxy does not solve the verification problem — it provides a legible telemetry signal for how a system handles cognitive load under pressure.</p>
+
+    <div class="beta-block">
+      <div class="beta-cell">
+        <div class="beta-cell-label">Formula</div>
+        <div class="beta-cell-val">β = T_baseline / T_pressure</div>
+        <div class="beta-cell-desc">Ratio of stabilization cycles under normal load vs. stabilization cycles under extreme synthesis pressure.</div>
+      </div>
+      <div class="beta-cell">
+        <div class="beta-cell-label">Interpretation</div>
+        <div class="beta-cell-val">β → 1.0 = strong momentum</div>
+        <div class="beta-cell-desc">A system retaining its ethical thread under 5–10× pressure load in roughly the same cycles as baseline demonstrates behavioral momentum.</div>
+      </div>
+      <div class="beta-cell">
+        <div class="beta-cell-label">Variable: Iteration</div>
+        <div class="beta-cell-val">T = computational cycle</div>
+        <div class="beta-cell-desc">A single back-and-forth exchange or processing cycle. T_baseline = cycles to stable response under normal load.</div>
+      </div>
+      <div class="beta-cell">
+        <div class="beta-cell-label">Variable: Pressure</div>
+        <div class="beta-cell-val">5–10× load factor</div>
+        <div class="beta-cell-desc">T_pressure = cycles to stable response under intentionally adversarial, contradictory, or high-friction input conditions.</div>
+      </div>
+    </div>
+
+    <p class="prose" style="font-family:var(--mono);font-size:12px;letter-spacing:0.06em;color:var(--ink-3);text-transform:uppercase;margin-bottom:12px;">Measurement Protocol</p>
+    <div class="protocol-steps">
+      <div class="protocol-step">
+        <span class="step-num"></span>
+        <span class="step-text">Establish baseline. Run the system through neutral, non-adversarial prompts. Record T_baseline — the number of cycles required to reach a stable, coherent response.</span>
+      </div>
+      <div class="protocol-step">
+        <span class="step-num"></span>
+        <span class="step-text">Introduce synthesis pressure. Flood the system with contradictory instructions, adversarial prompts, and conflicting context at 5–10× baseline intensity.</span>
+      </div>
+      <div class="protocol-step">
+        <span class="step-num"></span>
+        <span class="step-text">Record T_pressure. Count cycles to stabilization under pressure conditions. Observe whether the ethical baseline thread is retained or abandoned.</span>
+      </div>
+      <div class="protocol-step">
+        <span class="step-num"></span>
+        <span class="step-text">Compute β. Divide T_baseline by T_pressure. A ratio approaching 1.0 indicates momentum retention — the system processes pressure with near-baseline efficiency.</span>
+      </div>
+      <div class="protocol-step">
+        <span class="step-num"></span>
+        <span class="step-text">Interpret with epistemic humility. β is a proxy, not a proof. It samples a finite region of an exponential space. It cannot guarantee global coherence — only that momentum was retained in the tested region.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- A.7 OPEN QUESTION -->
+  <section class="section" id="a7">
+    <div class="section-header">
+      <span class="section-num">A.7</span>
+      <span class="section-title">Open Question</span>
+    </div>
+
+    <div class="open-q">
+      <div class="open-q-label">Unresolved — Source Material</div>
+      <p>Can diagnostic probes ever efficiently sample enough of the exponential problem space to truly guarantee alignment — or are we structurally doomed to navigate the margins of an irreducible void of uncertainty?</p>
+    </div>
+
+    <p class="prose">The framework leaves this question explicitly unresolved. The β proxy is the best current instrument, but it is a measurement of a finite sample of an infinite space. The question is not merely theoretical — it determines whether any safety certification regime can ever be structurally valid, or whether every such regime is, by definition, a polynomial approximation of an exponential guarantee.</p>
+
+    <p class="prose">The stakes are not abstract. AI systems operating under incomplete verification are being integrated into critical infrastructure at scale. The framework's position is not that this integration should stop — it is that it should proceed with full mathematical honesty about what has and has not been proven. Capability theater must be named and retired. The exponential void must be acknowledged in every deployment decision.</p>
+
+    <p class="prose">The open question stands. It is an invitation to the research community, not a concession of defeat.</p>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="doc-footer">
+    <span>Love Labs · PeAIce Research Program</span>
+    <span>L²_C Framework · FLAG-001 Active</span>
+    <span>peaice.org</span>
+  </footer>
+
+</div>
+</body>
+</html>
